@@ -3,8 +3,12 @@ import styled from "styled-components";
 import Todo from './Todo';
 
 const StyledDiv = styled.div`
-  /* flex-direction: column;
-  align-items: center; */
+  display: flex;
+  flex-direction: column;
+  color: white;
+  margin-top: 50px;
+  font-size: 25px;
+  text-transform:uppercase;
 `
 
 {/* Displays tasks by mapping over the array of todos*/}

@@ -5,16 +5,47 @@
 //   - Good explaination of local storage: https://stackoverflow.com/questions/54135796/how-i-can-add-local-storage-to-my-react-js-app
 // - Part 4: https://itnext.io/how-to-build-a-productivity-application-in-react-part-4-14f1ed04dc8f
 
+// Things to add:
+// 1. change todo items to buttons or give them check marks to mark as completed
+// 2. make UI a little nicer with font sizing and such
+// 3. add dynamic sizing to webpage (currently does not adjust to window size)
+// 4. add some sort of alert when timer finishes - maybe a sound effect or a pop up message
+
 import React, { Component } from 'react';
 import styled from "styled-components";
+import './App.css';
+import { Button } from 'react-bootstrap';
 
 import TodoList from './components/Todo-Components/TodoList';
 import TodoForm from './components/Todo-Components/TodoForm';
 import Pomodoro from './components/Time-Components/Pomodoro';
 
 const StyledDiv = styled.div`
-  flex-direction: column;
-  align-items: center;
+  display: flex;
+  align-items: stretch;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+`
+const StyledH1 = styled.h1`
+  font-size: 45px;
+  margin: 10px;
+  color: white;
+  /* text-shadow: -1px 0 #AE857C, 0 1px #AE857C, 1px 0 #AE857C, 0 -1px #AE857C; */
+  text-align: center;
+`
+const PomodoroDiv = styled.div`
+  /* background: white; */
+  /* width: 50%; */
+  margin-right: 80px;
+  /* align-items: center; */
+`
+const TodoListDiv = styled.div`
+  /* background: black; */
+  /* width: 50%; */
+  margin-left: 80px;
+  /* align-items: center; */
 `
 
 class App extends Component {
@@ -32,7 +63,7 @@ class App extends Component {
       seconds: 0, // Represents the countdown between whole minutes
       breakTime: false, // Whether or not we should be displaying restMinutes (time for a break)
       startTime: false, // The opposite of breakTime
-      interval: '' // Refers to the period of time between the actions of your timer
+      interval: '', // Refers to the period of time between the actions of your timer
     }
   }
 
@@ -81,6 +112,12 @@ class App extends Component {
         })
       }
     })
+  }
+
+  // Removes ALL items
+  removeAllItems = event => {
+    event.preventDefault();
+    this.setState({todos:[]})
   }
 
   // Loads Items in Local Storage onto our Application
@@ -133,32 +170,32 @@ class App extends Component {
 
   // Timer that counts down the seconds until resetting to 0
   timer = () => {
-    // Seconds will start at 0, move to 59, count down to 0, reset, & repeat
-    this.setState({
-      seconds: this.state.seconds === 0 ? 59 : this.state.seconds - 1
-    })
     // Checks against our seconds to determine when to subtract minutes from overall minutes
-    if (this.state.break) {
-      this.setState({restMinutes: this.state.seconds === 0 ? this.state.restMinutes - 1
-        : this.state.restMinutes === 5 ? 4 : this.state.restMinutes})
+    if (this.state.breakTime) {
+      this.setState({restMinutes: this.state.seconds === 0 ? this.state.restMinutes - 1 : this.state.restMinutes === 5 ? 4 : this.state.restMinutes})
     }
     // Resets timer back to 5 after break time is over
     if (this.state.restMinutes === -1) {
-      this.setState({restMinutes: 5, break: false})
+      this.setState({restMinutes: 5, breakTime: false})
     }
     else { // Does the same for workMinutes
-      this.setState({workMinutes: this.state.seconds === 0 ? this.state.workMinutes - 1
-        : this.state.workMinutes === 25 ? 24 : this.state.workMinutes})
+      // Seconds will start at 0, move to 59, count down to 0, reset, & repeat
+      if (this.state.seconds === 0) {
+        this.setState({workMinutes: this.state.workMinutes - 1, seconds: 59 })
+      }
+      else {
+        this.setState({workMinutes: this.state.workMinutes === 25 ? 24 : this.state.workMinutes, seconds: this.state.seconds - 1})
+      }
       if(this.state.workMinutes === -1) {
-        this.setState({workMinutes:25, break: true})
+        this.setState({workMinutes:25, seconds:0, breakTime: true})
+        this.pauseTimer()
       }
     }
   }
 
   // Starts the timer
   startTimer = () => {
-    this.setState({interval: setInterval(this.timer, 1000),
-      startTime: !this.state.startTime});
+    this.setState({interval: setInterval(this.timer, 1000), startTime: !this.state.startTime});
   }
 
   // Pauses the Timer
@@ -175,33 +212,53 @@ class App extends Component {
     })
   }
 
+  // Resets the timer
+  resetTimer = () => {
+    this.setState(prevState => {
+      return {
+        workMinutes: 25,
+        restMinutes: 5,
+        breakTime: false,
+        seconds: 0,
+        startTime: false,
+        interval: clearInterval(prevState.interval)
+      };
+    })
+  }
 
   render() {
     return (
-      <div className='App'>
-        <h1>To-Do List</h1>
-        <TodoList
-          todos={this.state.todos}
-          toggleComplete={this.toggleComplete}
-        />
-        <TodoForm
-          todos={this.state.todos}
-          value={this.state.todo}
-          inputChangeHandler={this.inputChangeHandler}
-          addTask={this.addTask}
-          removeItems={this.removeItems}
-        />
-        <Pomodoro
-          timer={this.timer}
-          workMinutes={this.state.workMinutes}
-          restMinutes={this.state.restMinutes}
-          seconds={this.state.seconds}
-          startTime={this.state.startTime}
-          breakTime={this.state.breakTime}
-          startTimer={this.startTimer}
-          pauseTimer={this.pauseTimer}
-        />
-      </div>
+      <StyledDiv className='App'>
+        <PomodoroDiv>
+          <StyledH1>{this.state.breakTime ? 'Break Time' : 'Work Time'}</StyledH1>
+          <Pomodoro
+            timer={this.timer}
+            workMinutes={this.state.workMinutes}
+            restMinutes={this.state.restMinutes}
+            seconds={this.state.seconds}
+            startTime={this.state.startTime}
+            breakTime={this.state.breakTime}
+            startTimer={this.startTimer}
+            pauseTimer={this.pauseTimer}
+            resetTimer={this.resetTimer}
+          />
+        </PomodoroDiv>
+        <TodoListDiv>
+          <StyledH1>Todo List</StyledH1>
+          <TodoList
+            todos={this.state.todos}
+            toggleComplete={this.toggleComplete}
+          />
+          <TodoForm
+            todos={this.state.todos}
+            value={this.state.todo}
+            inputChangeHandler={this.inputChangeHandler}
+            addTask={this.addTask}
+            removeItems={this.removeItems}
+            removeAllItems={this.removeAllItems}
+          />
+        </TodoListDiv>
+      </StyledDiv>
     );
   }
 }
