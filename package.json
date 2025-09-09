@@ -43,6 +43,6 @@
   },
   "devDependencies": {
     "npm-force-resolutions": "0.0.3",
-    "react-scripts": "^3.4.1"
+    "react-scripts": "^5.0.1"
   }
 }
